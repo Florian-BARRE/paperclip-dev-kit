@@ -63,4 +63,6 @@ ppdk commit: refused, 1 rule(s) blocking. Fix every finding above, then run the 
 | `BROKEN` | la règle est introuvable, mal configurée, ou a levé une exception | oui : la règle doit être corrigée |
 
 Codes de sortie : `0` passé, `1` refusé, `2` le kit n'a pas pu tourner (pas de dépôt, configuration invalide).
-`ppdk -v …` ou `PPDK_VERBOSE=1` affiche les journaux du kit.
+`ppdk -v …` ou `PPDK_VERBOSE=1` affiche les journaux du kit. Le rapport montre les 60 dernières lignes
+d'un constat (la sortie d'une commande en échec) ; `ppdk --full-output check <étape>` montre tout, et c'est
+le cas d'office en CI (variable `CI=true`).

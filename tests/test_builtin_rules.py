@@ -116,3 +116,14 @@ def test_command_requires_a_command_and_reports_a_missing_program() -> None:
 def test_unknown_option_is_refused() -> None:
     with pytest.raises(RuleConfigError, match="unknown option"):
         ConflictMarkerRule(name="ppdk.conflict_marker", options={"strict": True})
+
+
+def test_command_keeps_the_whole_output_in_order_without_colours() -> None:
+    script = (
+        "import sys; print('first'); sys.stdout.flush(); "
+        "print('\\x1b[31mred\\x1b[0m', file=sys.stderr); sys.stderr.flush(); "
+        "print('last'); raise SystemExit(1)"
+    )
+    rule = CommandRule(name="ppdk.command", options={"command": [sys.executable, "-c", script]})
+    message = rule.run(make_context({})).findings[0].message
+    assert message.splitlines()[1:] == ["first", "red", "last"]

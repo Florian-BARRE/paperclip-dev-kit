@@ -27,6 +27,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     )
     parser.add_argument("--version", action="version", version=f"ppdk {__version__}")
     parser.add_argument("-v", "--verbose", action="store_true", help="show the kit's logs")
+    parser.add_argument(
+        "--full-output",
+        action="store_true",
+        help="show the whole output of failing commands (default in CI)",
+    )
     commands = parser.add_subparsers(dest="command", required=True)
     check = commands.add_parser("check", help="run the rules of a stage")
     check.add_argument("stage", choices=[stage.value for stage in Stage])
@@ -49,7 +54,11 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     _setup_logs(args.verbose)
     # Reports go to stderr: git shows a hook's stderr to whoever committed.
-    app = PpdkApplication(cwd=Path.cwd(), builtin_rules=BUILTIN_RULES, out=sys.stderr)
+    # In CI nobody can rerun with --full-output: CI services set CI=true, show everything there.
+    full_output = args.full_output or os.environ.get("CI", "").lower() == "true"
+    app = PpdkApplication(
+        cwd=Path.cwd(), builtin_rules=BUILTIN_RULES, out=sys.stderr, full_output=full_output
+    )
     if args.command == "check":
         return app.check(Stage(args.stage))
     if args.command == "hook":

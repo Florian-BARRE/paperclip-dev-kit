@@ -16,7 +16,7 @@ from loggerplusplus import LoggerClass
 # ====== Local Project Imports ======
 from .config.project_config import ConfigError, ProjectConfig, ProjectConfigLoader
 from .engine.context_builder import ContextBuilder
-from .engine.reporter import Reporter
+from .engine.reporter import DEFAULT_FINDING_LINES, Reporter
 from .engine.rule_loader import RuleLoader, RuleLoadError
 from .engine.stage_runner import StageRunner
 from .git.git_repository import GitError, GitRepository
@@ -43,6 +43,7 @@ class PpdkApplication(LoggerClass):
         cwd (Path): Where the command was started.
         builtin_rules (Mapping[str, type[Rule]]): The kit's rules.
         out (TextIO): Where reports go (stderr in hooks, so git shows them).
+        full_output (bool): Show every line of the findings (a command's whole output).
     """
 
     # Private attributes
@@ -50,11 +51,18 @@ class PpdkApplication(LoggerClass):
     _builtin_rules: Mapping[str, type[Rule]]
     _reporter: Reporter
 
-    def __init__(self, *, cwd: Path, builtin_rules: Mapping[str, type[Rule]], out: TextIO) -> None:
+    def __init__(
+        self,
+        *,
+        cwd: Path,
+        builtin_rules: Mapping[str, type[Rule]],
+        out: TextIO,
+        full_output: bool = False,
+    ) -> None:
         LoggerClass.__init__(self)
         self._cwd = cwd
         self._builtin_rules = builtin_rules
-        self._reporter = Reporter(out)
+        self._reporter = Reporter(out, None if full_output else DEFAULT_FINDING_LINES)
 
     # =======================
     #   Private Methods

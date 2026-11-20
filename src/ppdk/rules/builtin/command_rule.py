@@ -5,6 +5,7 @@
 # ====== Standard Library Imports ======
 from __future__ import annotations
 
+import re
 import subprocess
 from typing import ClassVar, Final
 
@@ -13,8 +14,8 @@ from ..rule import Rule, RuleConfigError
 from ..rule_types import Finding, RuleContext, RuleResult
 
 # ====== Constants ======
-# Lines of output kept in the report: enough to see the failure, not the whole log.
-_OUTPUT_TAIL_LINES: Final[int] = 40
+# Colour codes make a report unreadable once captured: they are removed from the output.
+_ANSI_ESCAPE: Final[re.Pattern[str]] = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
 
 class CommandRule(Rule):
@@ -42,10 +43,9 @@ class CommandRule(Rule):
         self._timeout = self._option("timeout", int, 0) or None
 
     @staticmethod
-    def _tail(output: str) -> str:
-        """Return the last lines of `output`."""
-        lines = output.strip().splitlines()
-        return "\n".join(lines[-_OUTPUT_TAIL_LINES:])
+    def _clean(output: str) -> str:
+        """Return `output` without colour codes and surrounding blank lines."""
+        return _ANSI_ESCAPE.sub("", output).strip()
 
     # =======================
     #   Public Methods
@@ -57,7 +57,7 @@ class CommandRule(Rule):
             context (RuleContext): The repository root and the default timeout.
 
         Returns:
-            RuleResult: A failure with the end of the output when the command fails.
+            RuleResult: A failure carrying the command's output when it fails.
         """
         timeout = self._timeout or context.default_timeout
         shown = " ".join(self._command)
@@ -66,8 +66,11 @@ class CommandRule(Rule):
             completed = subprocess.run(
                 self._command,
                 cwd=context.repo_root,
-                capture_output=True,
+                # One stream, in the order it was written: a failure stays next to its context.
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
+                errors="replace",
                 timeout=timeout,
                 check=False,
             )
@@ -79,7 +82,8 @@ class CommandRule(Rule):
         self.logger.info(f"END command (cmd={shown}, exit={completed.returncode})")
         if completed.returncode == 0:
             return RuleResult.ok()
-        output = self._tail(f"{completed.stdout}\n{completed.stderr}")
+        # The whole output goes in the finding; the report decides how much of it to show.
+        output = self._clean(completed.stdout or "")
         return RuleResult.fail(
             Finding(message=f"`{shown}` failed (exit {completed.returncode}):\n{output}")
         )

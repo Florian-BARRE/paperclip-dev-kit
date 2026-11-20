@@ -1,6 +1,6 @@
 [project]
 name = "paperclip-dev-kit"
-version = "0.1.0"
+version = "0.1.1"
 description = "Light git guardrails for coding agents: rules run at commit, push and in CI, configured per repository in .ppdk/."
 readme = "README.md"
 license = "MIT"
