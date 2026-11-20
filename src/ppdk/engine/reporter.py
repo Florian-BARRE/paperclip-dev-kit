@@ -63,6 +63,10 @@ class Reporter:
             report (StageReport): The outcomes of a stage.
         """
         stage = report.stage.value
+        # A clean pass stays one line: hooks run at every commit, noise would hide real reports.
+        if report.passed and not any(o.status is OutcomeStatus.WARNED for o in report.outcomes):
+            self._write(f"ppdk {stage}: passed ({len(report.outcomes)} rule(s))")
+            return
         self._write(f"ppdk {stage}: {len(report.outcomes)} rule(s)")
         for outcome in report.outcomes:
             self._write_outcome(outcome)
