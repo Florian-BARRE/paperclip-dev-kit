@@ -5,6 +5,7 @@
 # ====== Standard Library Imports ======
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from typing import ClassVar, Final
@@ -16,6 +17,29 @@ from ..rule_types import Finding, RuleContext, RuleResult
 # ====== Constants ======
 # Colour codes make a report unreadable once captured: they are removed from the output.
 _ANSI_ESCAPE: Final[re.Pattern[str]] = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+# Variables git sets for its hooks that point at THIS repository (`git rev-parse --local-env-vars`,
+# plus the quarantine of a received push). A command started from a hook would inherit them: a test
+# that creates its own throw-away repository would then write commits and config into the real one.
+_GIT_LOCAL_ENV: Final[frozenset[str]] = frozenset(
+    {
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_CONFIG",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_CONFIG_COUNT",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_IMPLICIT_WORK_TREE",
+        "GIT_GRAFT_FILE",
+        "GIT_INDEX_FILE",
+        "GIT_NO_REPLACE_OBJECTS",
+        "GIT_REPLACE_REF_BASE",
+        "GIT_PREFIX",
+        "GIT_SHALLOW_FILE",
+        "GIT_COMMON_DIR",
+        "GIT_QUARANTINE_PATH",
+    }
+)
 
 
 class CommandRule(Rule):
@@ -43,6 +67,11 @@ class CommandRule(Rule):
         self._timeout = self._option("timeout", int, 0) or None
 
     @staticmethod
+    def _environment() -> dict[str, str]:
+        """Return the process environment without git's repository-local variables."""
+        return {key: value for key, value in os.environ.items() if key not in _GIT_LOCAL_ENV}
+
+    @staticmethod
     def _clean(output: str) -> str:
         """Return `output` without colour codes and surrounding blank lines."""
         return _ANSI_ESCAPE.sub("", output).strip()
@@ -66,6 +95,7 @@ class CommandRule(Rule):
             completed = subprocess.run(
                 self._command,
                 cwd=context.repo_root,
+                env=self._environment(),
                 # One stream, in the order it was written: a failure stays next to its context.
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,

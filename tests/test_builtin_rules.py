@@ -127,3 +127,15 @@ def test_command_keeps_the_whole_output_in_order_without_colours() -> None:
     rule = CommandRule(name="ppdk.command", options={"command": [sys.executable, "-c", script]})
     message = rule.run(make_context({})).findings[0].message
     assert message.splitlines()[1:] == ["first", "red", "last"]
+
+
+def test_command_does_not_inherit_the_hook_git_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GIT_DIR", "/real/repo/.git")
+    monkeypatch.setenv("GIT_INDEX_FILE", "/real/repo/.git/index")
+    monkeypatch.setenv("PPDK_KEEP_ME", "yes")
+    script = (
+        "import os, sys; bad = [k for k in ('GIT_DIR', 'GIT_INDEX_FILE') if k in os.environ]; "
+        "sys.exit(1 if bad or os.environ.get('PPDK_KEEP_ME') != 'yes' else 0)"
+    )
+    rule = CommandRule(name="ppdk.command", options={"command": [sys.executable, "-c", script]})
+    assert rule.run(make_context({})).passed

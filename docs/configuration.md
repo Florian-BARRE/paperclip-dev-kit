@@ -39,7 +39,7 @@ Une même règle peut apparaître plusieurs fois, avec des options ou des `paths
 | `ppdk.secret` | commit | une ligne au format d'un secret connu : clé privée, clés AWS, GitHub, Anthropic, OpenAI, Slack | `patterns` : expressions régulières en plus |
 | `ppdk.conflict_marker` | commit | une ligne `<<<<<<<` ou `>>>>>>>` (pas `=======`, souligné de titre en Markdown) | — |
 | `ppdk.file_size` | commit | un fichier au-delà de la limite | `max_kb` (défaut 1024) |
-| `ppdk.command` | push, ci | une commande du dépôt qui sort en erreur ou dépasse son délai | `command` (liste, obligatoire), `timeout` (secondes) |
+| `ppdk.command` | push, ci | une commande du dépôt qui sort en erreur ou dépasse son délai ; elle tourne à la racine du dépôt, sans les variables `GIT_DIR`, `GIT_INDEX_FILE`… que git donne à ses hooks (sinon les tests qui créent leurs propres dépôts écriraient dans le vrai) | `command` (liste, obligatoire), `timeout` (secondes) |
 
 Les fichiers binaires et supprimés sont ignorés par les règles qui lisent le contenu.
 
