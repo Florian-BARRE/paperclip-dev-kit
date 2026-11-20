@@ -13,7 +13,7 @@ jobs:
         with:
           fetch-depth: 0  # the rules compare the branch with origin/<base>
       - uses: astral-sh/setup-uv@v6
-      # Pinned to a commit of the kit (v0.1.1): the rules a repository passes today keep passing tomorrow.
+      # Pinned to a commit of the kit (v0.1.2): the rules a repository passes today keep passing tomorrow.
       - run: >-
-          uvx --from "git+https://github.com/Florian-BARRE/paperclip-dev-kit@2b9cbcc72f713db197859134456793820c1cd358"
+          uvx --from "git+https://github.com/Florian-BARRE/paperclip-dev-kit@950f32df68e4ad40f638edae5ac930f4c605ee1c"
           ppdk check ci
