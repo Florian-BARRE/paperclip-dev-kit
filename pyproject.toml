@@ -1,0 +1,39 @@
+[project]
+name = "paperclip-dev-kit"
+version = "0.1.0"
+description = "Light git guardrails for coding agents: rules run at commit, push and in CI, configured per repository in .ppdk/."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "loggerplusplus>=1.0",
+]
+
+[project.scripts]
+ppdk = "ppdk.entrypoint:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ppdk"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "N", "UP", "B"]
+# UP042: `class X(str, Enum)` is the convention of these projects (coding-standards, python.md).
+ignore = ["UP042"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

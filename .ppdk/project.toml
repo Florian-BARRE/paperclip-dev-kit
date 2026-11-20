@@ -1,0 +1,37 @@
+# The kit checks itself with itself.
+
+[project]
+base = "main"
+timeout = 600
+
+[[on.commit]]
+rule = "ppdk.base_branch"
+
+[[on.commit]]
+rule = "ppdk.env_file"
+
+[[on.commit]]
+rule = "ppdk.secret"
+paths = ["src/**", "docs/**", "templates/**", "*.md", "*.toml"]
+
+[[on.commit]]
+rule = "ppdk.conflict_marker"
+
+[[on.commit]]
+rule = "rules.file_length"
+paths = ["src/**"]
+
+[[on.push]]
+rule = "ppdk.base_branch"
+
+[[on.push]]
+rule = "ppdk.command"
+command = ["uv", "run", "ruff", "check", "src", "tests"]
+
+[[on.push]]
+rule = "ppdk.command"
+command = ["uv", "run", "pytest", "-q"]
+
+[[on.ci]]
+rule = "rules.file_length"
+paths = ["src/**"]

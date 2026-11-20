@@ -1,0 +1,17 @@
+# paperclip-dev-kit: replays the repository's .ppdk rules on every pull request ([[on.ci]], or the
+# [[on.push]] rules when there are none). Copy it to .github/workflows/ppdk.yml.
+name: ppdk
+
+on:
+  pull_request:
+
+jobs:
+  ppdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the rules compare the branch with origin/<base>
+      - uses: astral-sh/setup-uv@v6
+      # Pinned to a release: the rules a repository passes today keep passing tomorrow.
+      - run: uvx --from "git+https://github.com/Florian-BARRE/paperclip-dev-kit@v0.1.0" ppdk check ci
